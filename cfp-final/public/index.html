@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CFP – Scordia Antonio | Monitor Financiero</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0b0f1a; --panel:#111827; --panel2:#1a2236; --border:#1e2d47;
+  --blue:#1a4b8c; --blue2:#2563eb; --cyan:#38bdf8; --gold:#f59e0b;
+  --green:#22c55e; --red:#ef4444; --muted:#4b5e7a; --text:#e2e8f0;
+  --head:#94a3b8; --white:#ffffff;
+  --mono:'JetBrains Mono',monospace; --sans:'Montserrat',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:12px}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);min-height:100vh;overflow-x:hidden}
+
+/* TOPBAR */
+.topbar{background:linear-gradient(90deg,#0d1829,#0f2044,#0d1829);border-bottom:1px solid var(--border);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.topbar-brand{display:flex;align-items:center;gap:12px}
+.topbar-logo{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a4b8c,#0e2a55);border:2px solid #2563eb;display:flex;align-items:center;justify-content:center;font-family:var(--sans);font-size:10px;font-weight:900;color:#fff;letter-spacing:1px}
+.topbar-title{font-family:var(--sans)}
+.topbar-title h1{font-size:15px;font-weight:800;color:#fff;letter-spacing:.5px}
+.topbar-title p{font-size:9px;color:var(--cyan);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:18px}
+.topbar-date{font-size:10px;color:var(--head);text-align:right}
+.topbar-date .day{font-size:13px;font-weight:700;color:var(--gold)}
+.refresh-btn{background:var(--blue);border:none;color:#fff;padding:6px 14px;border-radius:6px;font-family:var(--sans);font-size:10px;font-weight:700;cursor:pointer;transition:background .2s;letter-spacing:.5px}
+.refresh-btn:hover{background:var(--blue2)}
+.refresh-btn.loading{opacity:.6;cursor:wait}
+.last-update{font-size:9px;color:var(--muted)}
+
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px 12px 20px}
+.col-2{grid-column:span 2}
+.col-3{grid-column:span 3}
+.col-4{grid-column:span 4}
+
+/* PANEL */
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.panel-header{background:linear-gradient(90deg,var(--blue),#0f2a52);padding:6px 10px;font-family:var(--sans);font-size:10px;font-weight:800;color:#fff;letter-spacing:1px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+.panel-header .badge{background:rgba(255,255,255,.15);padding:1px 6px;border-radius:10px;font-size:8px;letter-spacing:.5px}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{background:var(--panel2);color:var(--head);padding:4px 7px;font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;text-align:right;white-space:nowrap}
+.tbl th:first-child{text-align:left}
+.tbl td{padding:3px 7px;font-size:10px;border-bottom:1px solid rgba(30,45,71,.5);white-space:nowrap;text-align:right}
+.tbl td:first-child{text-align:left;color:var(--text)}
+.tbl tr:hover td{background:rgba(255,255,255,.03)}
+.tbl tr:last-child td{border-bottom:none}
+
+/* COLORS */
+.green{color:var(--green)} .red{color:var(--red)} .gold{color:var(--gold)} .cyan{color:var(--cyan)} .muted{color:var(--muted)} .bold{font-weight:700} .lbl{color:var(--head);font-size:10px} .val{color:var(--text)}
+
+/* LOADING */
+.spinner{display:inline-block;width:8px;height:8px;border:1.5px solid rgba(255,255,255,.2);border-top-color:var(--cyan);border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.cell-loading{color:var(--muted);font-size:9px;padding:8px 10px !important}
+.cell-error{color:var(--red);font-size:9px;padding:8px 10px !important}
+
+/* SECTION SEPARATOR */
+.sep{grid-column:span 4;padding:8px 2px 3px;border-top:2px solid var(--blue);margin-top:4px}
+.sep span{font-family:var(--sans);font-size:10px;font-weight:800;color:var(--cyan);letter-spacing:2px;text-transform:uppercase}
+
+/* RIESGO PAIS BOX */
+.rp-box{padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.rp-val{font-size:22px;font-weight:700;color:var(--gold);font-family:var(--mono)}
+.rp-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* LEGEND */
+.legend-row{display:flex;flex-wrap:wrap;gap:8px;margin:0 12px 12px;padding:14px 16px;background:var(--panel);border:1px solid var(--border);border-radius:8px}
+.leg-item{display:flex;align-items:flex-start;gap:8px;flex:1 1 160px;min-width:160px}
+.leg-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0;border:1px solid rgba(255,255,255,.1)}
+.leg-item b{font-size:10px;color:var(--text);font-weight:700;display:block}
+.leg-desc{font-size:8.5px;color:var(--muted);line-height:1.5;margin-top:1px}
+
+/* SOURCES */
+.sources{margin:0 12px 24px;padding:12px 16px;background:var(--panel);border:1px solid var(--border);border-radius:8px;font-size:9px;color:var(--muted);line-height:1.8}
+.sources strong{color:var(--head)}
+.sources a{color:var(--cyan);text-decoration:none}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">C.F.P</div>
+    <div class="topbar-title">
+      <h1>Scordia Antonio</h1>
+      <p>Contador y Asesor Financiero · cdr.fin.plus</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="last-update" id="last-update">Actualizando...</div>
+    <div class="topbar-date">
+      <div class="day" id="top-day"></div>
+      <div id="top-date"></div>
+    </div>
+    <button class="refresh-btn" id="refresh-btn" onclick="loadAll()">↻ Actualizar</button>
+  </div>
+</div>
+
+<div class="grid" id="main-grid">
+
+  <!-- ROW 1: FX · TASAS · CAUCIONES · REND.COMPARADO -->
+  <div class="panel" id="p-dolar">
+    <div class="panel-header">Dólar <span class="badge">ARS</span></div>
+    <table class="tbl"><thead><tr><th>Tipo</th><th>Compra</th><th>Venta</th></tr></thead>
+    <tbody id="dolar-body"><tr><td colspan="3" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel" id="p-tasas">
+    <div class="panel-header">Tasas <span class="badge">BCRA</span></div>
+    <table class="tbl"><thead><tr><th>Instrumento</th><th>TNA</th></tr></thead>
+    <tbody id="tasas-body"><tr><td colspan="2" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel" id="p-cauciones">
+    <div class="panel-header">Cauciones <span class="badge">BCRA</span></div>
+    <table class="tbl"><thead><tr><th>Plazo</th><th>TNA</th><th>TEM</th><th>TEA</th></tr></thead>
+    <tbody id="cauciones-body"><tr><td colspan="4" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel" id="p-rendcomp">
+    <div class="panel-header">LECAPs vs PF <span class="badge">Comparado</span></div>
+    <table class="tbl"><thead><tr><th>Instrumento</th><th>TNA</th><th>TEM</th><th>TEA</th></tr></thead>
+    <tbody id="rendcomp-body"><tr><td colspan="4" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <!-- ROW 2: ETF Indices · ETF Mat Primas -->
+  <div class="panel col-2">
+    <div class="panel-header">ETF – Índices <span class="badge">Yahoo Finance</span></div>
+    <table class="tbl"><thead><tr><th>ETF</th><th>Nombre</th><th>Last</th><th>Prev</th><th>%Chg</th></tr></thead>
+    <tbody id="etf-idx-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel col-2">
+    <div class="panel-header">ETF – Materias Primas <span class="badge">Yahoo Finance</span></div>
+    <table class="tbl"><thead><tr><th>Ticker</th><th>Last</th><th>%Chg</th></tr></thead>
+    <tbody id="etf-mp-body"><tr><td colspan="3" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <!-- SEPARATOR RENTA FIJA -->
+  <div class="sep"><span>📋 Renta Fija</span></div>
+
+  <!-- ROW 3: Globales · Bonares · Bopreales -->
+  <div class="panel">
+    <div class="panel-header">Globales USD <span class="badge">data912</span></div>
+    <table class="tbl"><thead><tr><th>Bono</th><th>Last</th><th>Prev</th><th>%Chg</th></tr></thead>
+    <tbody id="globales-body"><tr><td colspan="4" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-header">Bonares MEP <span class="badge">data912</span></div>
+    <table class="tbl"><thead><tr><th>Bono</th><th>Last</th><th>Prev</th><th>%Chg</th></tr></thead>
+    <tbody id="bonares-body"><tr><td colspan="4" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel col-2">
+    <div class="panel-header">Bopreales <span class="badge">data912</span></div>
+    <table class="tbl"><thead><tr><th>Bono</th><th>Vto</th><th>Last</th><th>Prev</th><th>%Chg</th></tr></thead>
+    <tbody id="bopreales-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <!-- ROW 4: LECAPs full width -->
+  <div class="panel col-4">
+    <div class="panel-header">LECAPs y BONCAPs – Letras y Bonos Capitalizables del Tesoro <span class="badge">data912</span></div>
+    <table class="tbl"><thead><tr><th>Ticker</th><th>Tipo</th><th>Vencimiento</th><th>Precio</th><th>TNA%</th><th>TEA%</th><th>Días</th></tr></thead>
+    <tbody id="lecaps-body"><tr><td colspan="7" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <!-- SEPARATOR RENTA VARIABLE -->
+  <div class="sep"><span>📈 Renta Variable</span></div>
+
+  <!-- ROW 5: Merval · ADRs -->
+  <div class="panel col-2">
+    <div class="panel-header">Merval – Panel Líder <span class="badge">Yahoo Finance</span></div>
+    <table class="tbl"><thead><tr><th>Empresa</th><th>Ticker</th><th>Last</th><th>Prev</th><th>%Chg</th></tr></thead>
+    <tbody id="merval-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel col-2">
+    <div class="panel-header">ADR – Acciones Argentinas en NY <span class="badge">Yahoo Finance</span></div>
+    <table class="tbl"><thead><tr><th>Empresa</th><th>Ticker</th><th>Last</th><th>Prev</th><th>%Chg</th></tr></thead>
+    <tbody id="adr-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <!-- ROW 6: CEDEARs acciones · CEDEARs ETF -->
+  <div class="panel col-2">
+    <div class="panel-header">CEDEARs – Acciones <span class="badge">Yahoo Finance + CCL</span></div>
+    <table class="tbl"><thead><tr><th>Ticker</th><th>Empresa</th><th>ARS</th><th>USD</th><th>%Chg</th></tr></thead>
+    <tbody id="cedears-acc-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel col-2">
+    <div class="panel-header">CEDEARs – ETFs <span class="badge">Yahoo Finance + CCL</span></div>
+    <table class="tbl"><thead><tr><th>Ticker</th><th>Nombre</th><th>ARS</th><th>USD</th><th>%Chg</th></tr></thead>
+    <tbody id="cedears-etf-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <!-- ROW 7: Sectorial YTD full width -->
+  <div class="panel col-4">
+    <div class="panel-header">Rendimientos Sectoriales Merval YTD (desde 01/01/2026) <span class="badge">Yahoo Finance</span></div>
+    <table class="tbl" id="sector-table">
+      <thead><tr><th>Sector</th><th>Acciones</th><th style="text-align:center">YTD%</th><th style="text-align:center">Mejor</th><th style="text-align:center">Peor</th></tr></thead>
+      <tbody id="sector-body"><tr><td colspan="5" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody>
+    </table>
+  </div>
+
+  <!-- SEPARATOR MACRO -->
+  <div class="sep"><span>🌐 Datos Macroeconómicos y Mercado Global</span></div>
+
+  <!-- ROW 8: Treasuries · Macro -->
+  <div class="panel col-2">
+    <div class="panel-header">Treasuries USA <span class="badge">Yahoo Finance</span></div>
+    <table class="tbl"><thead><tr><th>Plazo</th><th>Yield%</th><th>%Chg</th></tr></thead>
+    <tbody id="treasury-body"><tr><td colspan="3" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+  <div class="panel col-2">
+    <div class="panel-header">Datos Macroeconómicos <span class="badge">BCRA · INDEC · ArgentinaDatos</span></div>
+    <table class="tbl"><thead><tr><th>Indicador</th><th>Valor</th><th>Fecha</th><th>Fuente</th></tr></thead>
+    <tbody id="macro-body"><tr><td colspan="4" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr></tbody></table>
+  </div>
+
+</div>
+
+<!-- LEGEND -->
+<div class="legend-row">
+  <div class="leg-item"><span class="leg-icon" style="background:#1a4b8c">$</span><div><b>Dólar</b><div class="leg-desc">Oficial, Blue, MEP, CCL, Tarjeta, Mayorista y Cripto. Fuente: DolarAPI.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#065f46">%</span><div><b>Tasas</b><div class="leg-desc">PF, BADLAR, TAMAR. Fuente: BCRA API oficial.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#1e3a5f">⚖️</span><div><b>Cauciones</b><div class="leg-desc">Cauciones bursátiles 1d, 7d y 30d con TNA/TEA. Fuente: BCRA.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#064e3b">📊</span><div><b>LECAPs vs PF</b><div class="leg-desc">TNA/TEA promedio de LECAPs vs Plazo Fijo, BADLAR y TAMAR.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#1e40af">📈</span><div><b>ETF Índices</b><div class="leg-desc">S&P 500, Nasdaq, Brasil, Emergentes, Bonos EM y DXY. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#3b0764">🌍</span><div><b>ETF Mat. Primas</b><div class="leg-desc">Oro, plata, petróleo, soja, maíz, trigo y más. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#14532d">🏛️</span><div><b>Globales USD</b><div class="leg-desc">Bonos GD29–46 ley extranjera (NY). Fuente: data912.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#134e4a">💵</span><div><b>Bonares MEP</b><div class="leg-desc">Bonos AL29–41 ley local vía MEP. Fuente: data912.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#7c2d12">📜</span><div><b>Bopreales</b><div class="leg-desc">Bonos para deudas comerciales en USD emitidos por el BCRA. data912.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#312e81">📋</span><div><b>LECAPs / BONCAPs</b><div class="leg-desc">Letras (S*) y Bonos (T*) del Tesoro en pesos. TNA/TEA desde precio. data912.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#1e3a5f">🏦</span><div><b>Merval</b><div class="leg-desc">Panel líder BYMA: acciones de mayor capitalización. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#1c1917">🇺🇸</span><div><b>ADRs NY</b><div class="leg-desc">Acciones argentinas en dólares en NYSE/NASDAQ. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#7c3aed">🏷️</span><div><b>CEDEARs Acciones</b><div class="leg-desc">Apple, Google, Nvidia y más. Precio ARS calculado con CCL. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#6d28d9">📦</span><div><b>CEDEARs ETFs</b><div class="leg-desc">SPY, QQQ, GLD y más ETFs como CEDEARs. Precio ARS con CCL.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#14532d">🏆</span><div><b>Sectorial YTD</b><div class="leg-desc">Rendimiento acumulado 2026 por sector del Merval. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#1d4ed8">🇺🇸</span><div><b>Treasuries</b><div class="leg-desc">Yields del Tesoro USA a 3M, 5Y, 10Y y 30Y. Yahoo Finance.</div></div></div>
+  <div class="leg-item"><span class="leg-icon" style="background:#1e1b4b">🏗️</span><div><b>Macro</b><div class="leg-desc">Riesgo País, inflación, reservas, base monetaria, UVA, tipo de cambio. BCRA + INDEC.</div></div></div>
+</div>
+
+<!-- SOURCES -->
+<div class="sources">
+  <strong>📡 Fuentes:</strong>
+  <a href="https://dolarapi.com" target="_blank">DolarAPI</a> (dólar) ·
+  <a href="https://api.bcra.gob.ar" target="_blank">BCRA API</a> (tasas, macro) ·
+  <a href="https://argentinadatos.com" target="_blank">ArgentinaDatos</a> (inflación, riesgo país) ·
+  <a href="https://data912.com" target="_blank">data912</a> (bonos, LECAPs, BONCAPs) ·
+  <a href="https://finance.yahoo.com" target="_blank">Yahoo Finance</a> (ETFs, ADRs, Merval, CEDEARs, Treasuries) ·
+  Datos con demora de hasta 15 min en renta variable. Uso informativo personal.
+</div>
+
+<script>
+// ═══ HELPERS ═══
+const fmtN  = (v,d=2) => v!=null&&!isNaN(v)?Number(v).toLocaleString('es-AR',{minimumFractionDigits:d,maximumFractionDigits:d}):'—';
+const fmtPct= v => v!=null&&!isNaN(v)?(v>0?'+':'')+Number(v).toFixed(2)+'%':'—';
+const cls   = v => v>0?'green':v<0?'red':'muted';
+const td    = (val,k='') => `<td class="${k}">${val}</td>`;
+const err   = c => `<tr><td colspan="${c}" class="cell-error">⚠ Sin datos</td></tr>`;
+const spin  = c => `<tr><td colspan="${c}" class="cell-loading"><span class="spinner"></span>Cargando...</td></tr>`;
+
+// All API calls go through /api/ (Netlify Functions) — NO CORS issues
+async function api(fn, params={}) {
+  const qs = new URLSearchParams(params).toString();
+  const url = `/api/${fn}${qs?'?'+qs:''}`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`${fn}: ${r.status}`);
+  return r.json();
+}
+
+// ═══ DATE ═══
+const DAYS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function updateDate(){
+  const n=new Date();
+  document.getElementById('top-day').textContent=DAYS[n.getDay()];
+  document.getElementById('top-date').textContent=`${n.getDate()} de ${MONTHS[n.getMonth()]} de ${n.getFullYear()}`;
+}
+updateDate();
+
+// ═══ DÓLAR ═══
+async function loadDolar(){
+  const b=document.getElementById('dolar-body');
+  try{
+    const data=await api('dolar');
+    const order=['oficial','blue','bolsa','contadoconliqui','tarjeta','mayorista','cripto'];
+    const labels={oficial:'Oficial BNA',blue:'Blue',bolsa:'MEP (Bolsa)',contadoconliqui:'CCL',tarjeta:'Tarjeta',mayorista:'Mayorista',cripto:'Cripto'};
+    let h='';
+    order.forEach(casa=>{
+      const d=(data||[]).find(x=>x.casa===casa);
+      if(!d)return;
+      h+=`<tr>${td(labels[casa],'lbl')}${td(d.compra?'$ '+fmtN(d.compra):'—','cyan')}${td('<b>'+(d.venta?'$ '+fmtN(d.venta):'—')+'</b>','gold')}</tr>`;
+    });
+    b.innerHTML=h||err(3);
+  }catch(e){b.innerHTML=err(3);}
+}
+
+// ═══ TASAS + CAUCIONES + REND COMPARADO ═══
+let _bcra={};
+async function loadBCRA(){
+  try{
+    const d=await api('bcra');
+    (d?.results||[]).forEach(v=>{_bcra[v.idVariable]=v;});
+  }catch(e){}
+}
+
+async function loadTasas(){
+  const b=document.getElementById('tasas-body');
+  try{
+    await loadBCRA();
+    const rows=[
+      {id:35,label:'Plazo Fijo ARS 30d',unit:'%'},
+      {id:7, label:'BADLAR privados',unit:'%'},
+      {id:11,label:'TAMAR ponderada',unit:'%'},
+      {id:8, label:'TM20 bancos priv.',unit:'%'},
+      {id:28,label:'Préstamos personales',unit:'%'},
+      {id:30,label:'Tarjeta de crédito',unit:'%'},
+    ];
+    b.innerHTML=rows.map(r=>{
+      const v=_bcra[r.id];
+      return`<tr>${td(r.label,'lbl')}${td(v?'<b>'+fmtN(v.valor,2)+'%</b>':'—','gold')}</tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(2);}
+}
+
+async function loadCauciones(){
+  const b=document.getElementById('cauciones-body');
+  try{
+    if(!Object.keys(_bcra).length) await loadBCRA();
+    const cau1 =_bcra[27]?.valor??null;
+    const badlar=_bcra[7]?.valor??null;
+    const calcTEM=t=>t?(Math.pow(1+t/100/365,30)-1)*100:null;
+    const calcTEA=t=>t?(Math.pow(1+t/100/365,365)-1)*100:null;
+    const rows=[
+      {plazo:'1 día',   tna:cau1,                  nota:'BCRA id:27'},
+      {plazo:'7 días',  tna:cau1?cau1*0.95:null,   nota:'Estimado'},
+      {plazo:'30 días', tna:badlar,                 nota:'BADLAR ref.'},
+    ];
+    b.innerHTML=rows.map(r=>{
+      const tem=calcTEM(r.tna), tea=calcTEA(r.tna);
+      return`<tr>
+        ${td(r.plazo+' <span style="font-size:8px;color:var(--muted)">('+r.nota+')</span>','lbl bold')}
+        ${td(r.tna!=null?fmtN(r.tna,2)+'%':'—','gold bold')}
+        ${td(tem!=null?fmtN(tem,3)+'%':'—','cyan')}
+        ${td(tea!=null?fmtN(tea,2)+'%':'—','green')}
+      </tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(4);}
+}
+
+async function loadRendComparado(){
+  const b=document.getElementById('rendcomp-body');
+  try{
+    if(!Object.keys(_bcra).length) await loadBCRA();
+    // Get PF and BADLAR from BCRA
+    const pfTNA  =_bcra[35]?.valor??_bcra[7]?.valor??null;
+    const badlar =_bcra[7]?.valor??null;
+    const tamar  =_bcra[11]?.valor??null;
+    // Get LECAPs average TNA from data912
+    let lecapTNA=null;
+    try{
+      const notes=await api('data912',{endpoint:'/live/arg_notes'});
+      const tnas=[];
+      (notes||[]).forEach(item=>{
+        const tk=(item.t||item.ticker||'').toUpperCase();
+        if(!/^S[0-9]/.test(tk))return;
+        const precio=item.c??null;
+        const vtoStr=ALL_VTO[tk]??null;
+        const {tna}=calcRendimiento(precio,vtoStr);
+        if(tna&&tna>0&&tna<200)tnas.push(tna);
+      });
+      if(tnas.length) lecapTNA=tnas.reduce((a,b)=>a+b,0)/tnas.length;
+    }catch(e){}
+    const calcTEM=t=>t?(Math.pow(1+t/100/365,30)-1)*100:null;
+    const calcTEA=t=>t?(Math.pow(1+t/100/365,365)-1)*100:null;
+    const rows=[
+      {label:'📋 LECAPs (prom.)',color:'var(--cyan)', tna:lecapTNA},
+      {label:'🏦 Plazo Fijo 30d', color:'var(--green)',tna:pfTNA},
+      {label:'📊 BADLAR',         color:'var(--gold)', tna:badlar},
+      {label:'📈 TAMAR',          color:'#a78bfa',     tna:tamar},
+    ];
+    b.innerHTML=rows.map(r=>{
+      const tem=calcTEM(r.tna),tea=calcTEA(r.tna);
+      return`<tr>
+        ${td('<span style="color:'+r.color+';font-weight:700">'+r.label+'</span>','')}
+        ${td(r.tna!=null?fmtN(r.tna,2)+'%':'—','bold')}
+        ${td(tem!=null?fmtN(tem,3)+'%':'—','muted')}
+        ${td(tea!=null?'<b>'+fmtN(tea,2)+'%</b>':'—', tea?cls(tea):'muted')}
+      </tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(4);}
+}
+
+// ═══ YAHOO QUOTE helper ═══
+async function yahooQuote(symbols){
+  const sym=Array.isArray(symbols)?symbols.join(','):symbols;
+  const d=await api('yahoo',{symbols:sym});
+  const map={};
+  (d?.quoteResponse?.result||[]).forEach(r=>{map[r.symbol]=r;});
+  return map;
+}
+
+// ═══ ETF ÍNDICES ═══
+const ETF_IDX=[['SPY','S&P 500'],['QQQ','Nasdaq 100'],['EWZ','Brasil'],['EEM','Emergentes'],['EMB','Bonos Emerg'],['DX-Y.NYB','Índice Dólar']];
+async function loadETFIdx(){
+  const b=document.getElementById('etf-idx-body');
+  try{
+    const q=await yahooQuote(ETF_IDX.map(e=>e[0]));
+    b.innerHTML=ETF_IDX.map(([sym,name])=>{
+      const r=q[sym];
+      const last=r?.regularMarketPrice??null, prev=r?.regularMarketPreviousClose??null, pct=r?.regularMarketChangePercent??null;
+      return`<tr>${td(sym==='DX-Y.NYB'?'DXY':sym,'cyan bold')}${td(name,'lbl')}${td(fmtN(last),'bold')}${td(fmtN(prev),'muted')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(5);}
+}
+
+// ═══ ETF MATERIAS PRIMAS ═══
+const ETF_MP=[['GLD','ORO'],['SLV','PLATA'],['COPX','COBRE'],['URA','URANIO'],['LIT','LITIO'],['UNG','GAS NAT.'],['USO','WTI'],['BNO','BRENT'],['SOYB','SOJA'],['CORN','MAÍZ'],['WEAT','TRIGO'],['DBA','AGRI.'],['REMX','T.RARAS']];
+async function loadETFMP(){
+  const b=document.getElementById('etf-mp-body');
+  try{
+    const q=await yahooQuote(ETF_MP.map(e=>e[0]));
+    b.innerHTML=ETF_MP.map(([sym,name])=>{
+      const r=q[sym], last=r?.regularMarketPrice??null, pct=r?.regularMarketChangePercent??null;
+      return`<tr>${td(sym+' – '+name,'lbl')}${td(fmtN(last),'bold')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(3);}
+}
+
+// ═══ ADRs ═══
+const ADRS=[['CRESY','CRESUD'],['GGAL','GALICIA'],['BBAR','BBVA FCO.'],['BMA','MACRO'],['CEPU','C.PUERTO'],['EDN','EDENOR'],['IRS','IRSA'],['LOMA','LOMA NEGRA'],['PAM','PAMPA'],['SUPV','SUPERVIELLE'],['TEO','TELECOM'],['TGS','TGS'],['YPFD','YPF'],['TS','TENARIS'],['TX','TERNIUM'],['MELI','MERCADO LIBRE'],['AGRO','ADECOAGRO'],['VIST','VISTA ENERGY'],['GLOB','GLOBANT']];
+async function loadADR(){
+  const b=document.getElementById('adr-body');
+  try{
+    const q=await yahooQuote(ADRS.map(a=>a[0]));
+    b.innerHTML=ADRS.map(([sym,name])=>{
+      const r=q[sym], last=r?.regularMarketPrice??null, prev=r?.regularMarketPreviousClose??null, pct=r?.regularMarketChangePercent??null;
+      return`<tr>${td(name,'lbl')}${td(sym,'cyan')}${td(fmtN(last),'bold')}${td(fmtN(prev),'muted')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(5);}
+}
+
+// ═══ MERVAL ═══
+const MERVAL=['^MERV','ALUA.BA','BBAR.BA','BMA.BA','BYMA.BA','CEPU.BA','COME.BA','CRES.BA','EDN.BA','GGAL.BA','LOMA.BA','MIRG.BA','PAMP.BA','SUPV.BA','TECO2.BA','TGNO4.BA','TGSU2.BA','TRAN.BA','TXAR.BA','VALO.BA','YPFD.BA'];
+const MERVAL_N={'^MERV':'S&P Merval','ALUA.BA':'ALUAR','BBAR.BA':'BBVA','BMA.BA':'MACRO','BYMA.BA':'BYMA','CEPU.BA':'C.PUERTO','COME.BA':'COM.PLATA','CRES.BA':'CRESUD','EDN.BA':'EDENOR','GGAL.BA':'GALICIA','LOMA.BA':'LOMA NEGRA','MIRG.BA':'MIRGOR','PAMP.BA':'PAMPA','SUPV.BA':'SUPERVIELLE','TECO2.BA':'TELECOM','TGNO4.BA':'TGN','TGSU2.BA':'TGS','TRAN.BA':'TRANSENER','TXAR.BA':'TERNIUM ARG','VALO.BA':'B.VALORES','YPFD.BA':'YPF'};
+async function loadMerval(){
+  const b=document.getElementById('merval-body');
+  try{
+    const q=await yahooQuote(MERVAL);
+    b.innerHTML=MERVAL.map(sym=>{
+      const r=q[sym], last=r?.regularMarketPrice??null, prev=r?.regularMarketPreviousClose??null, pct=r?.regularMarketChangePercent??null;
+      const ticker=sym.replace('.BA','');
+      return`<tr>${td(MERVAL_N[sym]||sym,'lbl')}${td(ticker,'cyan')}${td(fmtN(last,0),'bold')}${td(fmtN(prev,0),'muted')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(5);}
+}
+
+// ═══ BONOS data912 ═══
+const GLOBALES_T=['GD29','GD30','GD35','GD38','GD41','GD46'];
+const BONARES_T =['AL29','AL30','AL35','AE38','AL41'];
+const BOPREALES_T=[{t:'BPY6D',v:'31/05/2026'},{t:'BPA7D',v:'31/10/2027'},{t:'BPB7D',v:'31/10/2027'},{t:'BPC7D',v:'31/10/2027'},{t:'BPD7D',v:'31/10/2027'},{t:'BPA8D',v:'31/10/2028'},{t:'BPB8D',v:'31/10/2028'},{t:'BPY6C',v:'31/05/2026'},{t:'BPA7C',v:'31/10/2027'},{t:'BPB7C',v:'31/10/2027'},{t:'BPC7C',v:'31/10/2027'},{t:'BPD7C',v:'31/10/2027'},{t:'BPA8C',v:'31/10/2028'},{t:'BPB8C',v:'31/10/2028'}];
+
+async function loadBonos(){
+  const gb=document.getElementById('globales-body');
+  const bb=document.getElementById('bonares-body');
+  const pb=document.getElementById('bopreales-body');
+  try{
+    const bonds=await api('data912',{endpoint:'/live/arg_bonds'});
+    const map={};
+    (bonds||[]).forEach(b=>{
+      const tk=(b.t||b.ticker||'').toUpperCase();
+      map[tk]=b; map[tk.replace(/D$/,'')]=b;
+    });
+    const row4=(tk)=>{
+      const b=map[tk]??map[tk+'D']??{};
+      const last=b.c??b.ultimo??null, prev=b.pc??b.anterior??null;
+      const pct=(last&&prev&&prev!==0)?((last-prev)/prev*100):null;
+      return`<tr>${td(tk,'cyan bold')}${td(fmtN(last),'bold')}${td(fmtN(prev),'muted')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    };
+    gb.innerHTML=GLOBALES_T.map(row4).join('')||err(4);
+    bb.innerHTML=BONARES_T.map(row4).join('')||err(4);
+    pb.innerHTML=BOPREALES_T.map(({t,v})=>{
+      const b=map[t]??{};
+      const last=b.c??b.ultimo??null, prev=b.pc??b.anterior??null;
+      const pct=(last&&prev&&prev!==0)?((last-prev)/prev*100):null;
+      return`<tr>${td(t,'cyan bold')}${td(v,'muted')}${td(fmtN(last),'bold')}${td(fmtN(prev),'muted')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    }).join('')||err(5);
+  }catch(e){gb.innerHTML=bb.innerHTML=err(4); pb.innerHTML=err(5);}
+}
+
+// ═══ LECAPs y BONCAPs ═══
+const LECAP_VTO={'S31M6':'2026-03-31','S17A6':'2026-04-17','S30A6':'2026-04-30','S15M6':'2026-05-15','S29M6':'2026-05-29','S12J6':'2026-06-12','S30J6':'2026-06-30','S31L6':'2026-07-31','S28G6':'2026-08-28','S30S6':'2026-09-30','S30O6':'2026-10-30','S27N6':'2026-11-27','S31D6':'2026-12-31'};
+const BONCAP_VTO={'T30J6':'2026-06-30','T30E7':'2027-01-30','T30A7':'2027-04-30','T30J7':'2027-06-30','T15E7':'2027-01-15','T15E8':'2028-01-15','T17O8':'2028-10-17','T15E9':'2029-01-15'};
+const ALL_VTO={...LECAP_VTO,...BONCAP_VTO};
+const EXCL=['TECO','TGSU','TGNO','TRAN','TXAR','SUPV'];
+function isLC(t){return /^[ST][0-9]/.test(t)&&!EXCL.some(x=>t.startsWith(x));}
+function calcRendimiento(precio,vtoStr){
+  if(!precio||precio<=0||!vtoStr)return{tna:null,tea:null,dias:null};
+  const liq=new Date(); liq.setDate(liq.getDate()+1);
+  const vto=new Date(vtoStr+'T00:00:00');
+  const dias=Math.round((vto-liq)/(1000*60*60*24));
+  if(dias<=0)return{tna:null,tea:null,dias:0};
+  const tea=(Math.pow(100/precio,365/dias)-1)*100;
+  const tna=(Math.pow(100/precio,1/dias)-1)*365*100;
+  return{tna,tea,dias};
+}
+
+async function loadLecaps(){
+  const b=document.getElementById('lecaps-body');
+  try{
+    const [nr,br]=await Promise.allSettled([
+      api('data912',{endpoint:'/live/arg_notes'}),
+      api('data912',{endpoint:'/live/arg_bonds'}),
+    ]);
+    const notes=nr.status==='fulfilled'?nr.value||[]:[];
+    const bonds=br.status==='fulfilled'?br.value||[]:[];
+    const items=[...notes,...bonds].filter(x=>isLC((x.t||x.ticker||'').toUpperCase()));
+    if(!items.length){b.innerHTML='<tr><td colspan="7" style="padding:8px 10px;color:var(--gold);font-size:9px">Sin datos en este momento. Intentá actualizar.</td></tr>';return;}
+    items.sort((a,c)=>{
+      const ta=(a.t||a.ticker||'').toUpperCase(), tc=(c.t||c.ticker||'').toUpperCase();
+      if(ta[0]!==tc[0])return ta[0]==='S'?-1:1;
+      return(ALL_VTO[ta]||ta)>(ALL_VTO[tc]||tc)?1:-1;
+    });
+    b.innerHTML=items.map(item=>{
+      const tk=(item.t||item.ticker||'').toUpperCase();
+      const tipo=tk[0]==='S'?'LECAP':'BONCAP';
+      const precio=item.c??null, col=tipo==='LECAP'?'cyan':'gold';
+      const {tna,tea,dias}=calcRendimiento(precio,ALL_VTO[tk]??null);
+      const vto=(ALL_VTO[tk]||'—').split('-').reverse().join('/');
+      return'<tr>'
+        +'<td class="bold '+col+'">'+tk+'</td>'
+        +'<td><span class="'+col+'" style="font-size:9px;font-weight:700;border:1px solid currentColor;border-radius:4px;padding:1px 5px">'+tipo+'</span></td>'
+        +'<td class="muted">'+vto+'</td>'
+        +'<td class="val bold" style="text-align:right">'+(precio!=null?fmtN(precio):'—')+'</td>'
+        +'<td class="'+(tna?cls(tna):'muted')+'" style="text-align:right">'+(tna!=null?'<b>'+fmtN(tna,1)+'%</b>':'—')+'</td>'
+        +'<td class="'+(tea?cls(tea):'muted')+'" style="text-align:right">'+(tea!=null?fmtN(tea,1)+'%':'—')+'</td>'
+        +'<td class="muted" style="text-align:right">'+(dias!=null?dias+'d':'—')+'</td>'
+        +'</tr>';
+    }).join('');
+  }catch(e){b.innerHTML=err(7);}
+}
+
+// ═══ CEDEARs ═══
+const CEDEARS_ACC=[{sym:'AAPL',name:'Apple',r:10},{sym:'MSFT',name:'Microsoft',r:10},{sym:'GOOGL',name:'Alphabet',r:40},{sym:'AMZN',name:'Amazon',r:40},{sym:'NVDA',name:'Nvidia',r:8},{sym:'META',name:'Meta',r:10},{sym:'TSLA',name:'Tesla',r:10},{sym:'JPM',name:'JPMorgan',r:8},{sym:'KO',name:'Coca-Cola',r:5},{sym:'BAC',name:'Bank of Am.',r:5},{sym:'DIS',name:'Disney',r:5},{sym:'BRKB',name:'Berkshire B',r:100}];
+const CEDEARS_ETF=[{sym:'SPY',name:'S&P 500 ETF',r:10},{sym:'QQQ',name:'Nasdaq 100',r:15},{sym:'GLD',name:'Gold ETF',r:3},{sym:'XLE',name:'Energy ETF',r:3},{sym:'XLF',name:'Financials',r:3},{sym:'EWZ',name:'Brazil ETF',r:5},{sym:'ARKK',name:'ARK Innov.',r:3},{sym:'IWM',name:'Russell 2000',r:5}];
+
+async function loadCedears(){
+  const ab=document.getElementById('cedears-acc-body'), eb=document.getElementById('cedears-etf-body');
+  try{
+    let ccl=null;
+    try{const d=await api('dolar');ccl=(d||[]).find(x=>x.casa==='contadoconliqui')?.venta??null;}catch(e){}
+    const all=[...CEDEARS_ACC,...CEDEARS_ETF];
+    const q=await yahooQuote(all.map(c=>c.sym));
+    const row=c=>{
+      const r=q[c.sym], usd=r?.regularMarketPrice??null, pct=r?.regularMarketChangePercent??null;
+      const ars=(usd&&ccl)?usd*ccl/c.r:null;
+      return'<tr>'+td(c.sym,'cyan bold')+td(c.name,'lbl')+td(ars?'$ '+fmtN(ars,0):'—','bold')+td(usd?'U$S '+fmtN(usd,2):'—','muted')+td('<b>'+fmtPct(pct)+'</b>',cls(pct))+'</tr>';
+    };
+    ab.innerHTML=CEDEARS_ACC.map(row).join('');
+    eb.innerHTML=CEDEARS_ETF.map(row).join('');
+  }catch(e){ab.innerHTML=eb.innerHTML=err(5);}
+}
+
+// ═══ TREASURIES ═══
+const TR=['^IRX','3M T-Bill'],[TRD={'^IRX':'3M T-Bill','^FVX':'5Y T-Note','^TNX':'10Y T-Note','^TYX':'30Y T-Note'}];
+async function loadTreasuries(){
+  const b=document.getElementById('treasury-body');
+  try{
+    const syms=Object.keys(TRD);
+    const q=await yahooQuote(syms);
+    b.innerHTML=syms.map(sym=>{
+      const r=q[sym], y=r?.regularMarketPrice??null, pct=r?.regularMarketChangePercent??null;
+      return`<tr>${td(TRD[sym],'lbl')}${td(y!=null?'<b>'+fmtN(y,3)+'%</b>':'—','gold')}${td('<b>'+fmtPct(pct)+'</b>',cls(pct))}</tr>`;
+    }).join('');
+  }catch(e){b.innerHTML=err(3);}
+}
+
+// ═══ MACRO ═══
+async function loadMacro(){
+  const b=document.getElementById('macro-body');
+  try{
+    const [bcraRes,rpRes,infRes,infIaRes]=await Promise.allSettled([
+      api('bcra'),
+      api('argdata',{path:'finanzas/indices/riesgo-pais/ultimo'}),
+      api('argdata',{path:'finanzas/indices/inflacion'}),
+      api('argdata',{path:'finanzas/indices/inflacionInteranual'}),
+    ]);
+    const vars={};
+    (bcraRes.value?.results||[]).forEach(v=>{vars[v.idVariable]=v;});
+    const fmt=s=>s?s.substring(0,10).split('-').reverse().join('/'):'—';
+    const rows=[];
+    // Riesgo Pais
+    if(rpRes.status==='fulfilled'){
+      const rp=rpRes.value;
+      const val=rp?.valor??rp?.riesgoPais??null;
+      if(val) rows.push({label:'🔴 Riesgo País EMBI+',val:fmtN(val,0)+' pb',date:fmt(rp?.fecha),src:'JP Morgan',hl:true});
+    }
+    // Inflacion
+    if(infRes.status==='fulfilled'){
+      const arr=infRes.value||[];
+      const last=arr[arr.length-1];
+      if(last) rows.push({label:'Inflación mensual IPC',val:fmtN(last.valor,1)+'%',date:last.fecha?.substring(0,7)||'—',src:'INDEC'});
+    }
+    if(infIaRes.status==='fulfilled'){
+      const arr=infIaRes.value||[];
+      const last=arr[arr.length-1];
+      if(last) rows.push({label:'Inflación interanual IPC',val:fmtN(last.valor,1)+'%',date:last.fecha?.substring(0,7)||'—',src:'INDEC'});
+    }
+    // BCRA vars
+    const bm=[
+      {id:1,l:'Reservas Internacionales BCRA',u:'mill. USD'},
+      {id:4,l:'Base Monetaria',u:'mill. ARS'},
+      {id:6,l:'Circulante público',u:'mill. ARS'},
+      {id:7,l:'BADLAR bancos priv. (TNA)',u:'%'},
+      {id:11,l:'TAMAR ponderada (TNA)',u:'%'},
+      {id:15,l:'TC oficial referencia',u:'ARS/USD'},
+      {id:17,l:'TC mayorista (COM A3500)',u:'ARS/USD'},
+      {id:21,l:'Préstamos sector privado',u:'mill. ARS'},
+      {id:24,l:'Depósitos ARS privados',u:'mill. ARS'},
+      {id:27,l:'Caución bursátil 1d (TNA)',u:'%'},
+      {id:34,l:'UVA diario',u:'ARS'},
+      {id:40,l:'Tipo cambio multilateral',u:'índice'},
+    ];
+    bm.forEach(({id,l,u})=>{
+      const v=vars[id];
+      if(v) rows.push({label:l,val:fmtN(v.valor,u==='%'?2:0)+' '+u,date:fmt(v.fecha),src:'BCRA'});
+    });
+    b.innerHTML=rows.map(r=>`<tr${r.hl?' style="background:rgba(245,158,11,.08)"':''}>
+      <td class="${r.hl?'gold bold':'lbl'}">${r.label}</td>
+      <td class="${r.hl?'gold bold':'val bold'}" style="text-align:right">${r.val}</td>
+      <td class="muted" style="text-align:right">${r.date}</td>
+      <td class="muted" style="font-size:9px">${r.src}</td>
+    </tr>`).join('')||err(4);
+  }catch(e){b.innerHTML=err(4);}
+}
+
+// ═══ SECTORIAL YTD ═══
+const SECTORES=[
+  {sector:'🏦 Bancos',tickers:[{s:'GGAL.BA',n:'Galicia'},{s:'BMA.BA',n:'Macro'},{s:'BBAR.BA',n:'BBVA'},{s:'SUPV.BA',n:'Supervielle'},{s:'VALO.BA',n:'B.Valores'},{s:'BYMA.BA',n:'BYMA'}]},
+  {sector:'⚡ Energía',tickers:[{s:'PAMP.BA',n:'Pampa'},{s:'CEPU.BA',n:'C.Puerto'},{s:'TGSU2.BA',n:'TGS'},{s:'TGNO4.BA',n:'TGN'},{s:'TRAN.BA',n:'Transener'},{s:'EDN.BA',n:'Edenor'}]},
+  {sector:'🛢️ Petróleo',tickers:[{s:'YPFD.BA',n:'YPF'},{s:'COME.BA',n:'Com.Plata'}]},
+  {sector:'📡 Telecom',tickers:[{s:'TECO2.BA',n:'Telecom'}]},
+  {sector:'🏗️ Industrial',tickers:[{s:'ALUA.BA',n:'Aluar'},{s:'TXAR.BA',n:'Ternium'},{s:'CRES.BA',n:'Cresud'},{s:'MIRG.BA',n:'Mirgor'},{s:'LOMA.BA',n:'Loma Negra'}]},
+];
+async function loadSectorial(){
+  const b=document.getElementById('sector-body');
+  try{
+    const allT=['^MERV',...SECTORES.flatMap(s=>s.tickers.map(t=>t.s))];
+    const q=await yahooQuote(allT);
+    // Get YTD base (31/12/2025) via chart endpoint
+    const ytd={};
+    await Promise.allSettled(allT.map(async sym=>{
+      try{
+        const d=await api('yahoochart',{sym,period1:'1735516800',period2:'1735689600'});
+        const closes=d?.chart?.result?.[0]?.indicators?.quote?.[0]?.close||[];
+        for(let i=closes.length-1;i>=0;i--){if(closes[i]!=null){ytd[sym]=closes[i];break;}}
+      }catch(e){}
+    }));
+    const calcYTD=(sym)=>{
+      const cur=q[sym]?.regularMarketPrice??null;
+      const base=ytd[sym]??q[sym]?.regularMarketPreviousClose??null;
+      return(cur&&base&&base!==0)?((cur-base)/base*100):null;
+    };
+    // Merval index row
+    const mYtd=calcYTD('^MERV');
+    let h=`<tr style="background:rgba(37,99,235,.12)">
+      ${td('📊 S&P Merval','cyan bold')}
+      ${td('<span style="font-size:9px;color:var(--muted)">Índice general</span>','')}
+      ${td('<b style="font-size:14px">'+fmtPct(mYtd)+'</b>',cls(mYtd)+' bold')}
+      ${td('Base: 31/12/2025','muted')}
+      ${td('—','muted')}
+    </tr>`;
+    SECTORES.forEach(({sector,tickers})=>{
+      let sum=0,cnt=0,best=-Infinity,worst=Infinity,bestN='—',worstN='—';
+      const details=tickers.map(({s,n})=>{
+        const y=calcYTD(s);
+        if(y!=null){sum+=y;cnt++;if(y>best){best=y;bestN=n+' '+fmtPct(y);}if(y<worst){worst=y;worstN=n+' '+fmtPct(y);}}
+        return`<span class="${cls(y)}" style="font-size:9px" title="${s}">${n}${y!=null?' '+fmtPct(y):''}</span>`;
+      }).join(' · ');
+      const avg=cnt?sum/cnt:null;
+      h+=`<tr>
+        ${td(sector,'bold')}
+        ${td('<div style="line-height:1.7">'+details+'</div>','')}
+        ${td('<b style="font-size:13px">'+fmtPct(avg)+'</b>',cls(avg)+' bold')}
+        ${td('<span style="font-size:9px" class="green">'+bestN+'</span>','')}
+        ${td('<span style="font-size:9px" class="red">'+worstN+'</span>','')}
+      </tr>`;
+    });
+    b.innerHTML=h;
+  }catch(e){b.innerHTML=err(5);}
+}
+
+// ═══ LOAD ALL ═══
+async function loadAll(){
+  const btn=document.getElementById('refresh-btn');
+  btn.classList.add('loading'); btn.textContent='↻ Cargando...';
+  await Promise.allSettled([
+    loadDolar(), loadTasas(), loadCauciones(), loadRendComparado(),
+    loadETFIdx(), loadETFMP(), loadBonos(), loadLecaps(),
+    loadADR(), loadMerval(), loadCedears(),
+    loadTreasuries(), loadMacro(), loadSectorial(),
+  ]);
+  const now=new Date();
+  document.getElementById('last-update').textContent='Actualizado: '+now.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  btn.classList.remove('loading'); btn.textContent='↻ Actualizar';
+}
+
+// Init + auto-refresh cada 3 min
+loadAll();
+setInterval(loadAll, 3*60*1000);
+</script>
+</body>
+</html>
